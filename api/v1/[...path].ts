@@ -1,4 +1,4 @@
-import { handleRequest } from "../../../edge/wald";
+import { handleRequest } from "../../edge/wald";
 
 export const config = {
   runtime: "edge",
