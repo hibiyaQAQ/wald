@@ -65,12 +65,31 @@ const AVAILABLE_MODELS = [
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      ...corsHeaders(),
+    },
   });
 }
 
 function errorResponse(status: number, detail: string): Response {
   return jsonResponse({ detail }, status);
+}
+
+function corsHeaders(): Record<string, string> {
+  return {
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-headers": "authorization,content-type",
+    "access-control-max-age": "86400",
+  };
+}
+
+function optionsResponse(): Response {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(),
+  });
 }
 
 function getIsoTime(): string {
@@ -568,6 +587,7 @@ async function handleChatCompletions(request: Request): Promise<Response> {
           "content-type": "text/event-stream; charset=utf-8",
           "cache-control": "no-cache",
           connection: "keep-alive",
+          ...corsHeaders(),
         },
       });
     }
@@ -595,6 +615,10 @@ async function handleChatCompletions(request: Request): Promise<Response> {
 export async function handleRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/^\/api/, "");
+
+  if (request.method === "OPTIONS") {
+    return optionsResponse();
+  }
 
   if (request.method === "GET" && pathname === "/v1/models") {
     return jsonResponse({
